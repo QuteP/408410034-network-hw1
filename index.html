@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>可愛的鳥</title>
+	<style>
+	table,
+td {
+    border: 1px solid #333;
+}
+
+thead,
+tfoot {
+    background-color: #333;
+    color: #fff;
+}</style>
+</head>
+<body>
+	 <img id="blah" src="./images/bird.jpg">
+	<form enctype="multipart/form-data" method="POST">
+	<input type="hidden" name="MAX_FILE_SIZE" value="60000" />
+	選擇要上傳的檔案（勿超過60kb，圖片可預覽）: <input name="uploadedfile" type="file" id="imgInp" /><br />
+	<input type="submit" value="上傳" />
+	</form>
+	<br>
+	檔案大小：<p id="meow">0</p>
+	<br>
+	<table>
+    <thead>
+        <tr>
+            <th colspan="3">檔案狀態表</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>檔名</td>
+            <td>大小</td>
+            <td>處理時間（秒）</td>
+        </tr>
+   </tbody>
+</table>
+    <script type="text/javascript">
+        imgInp.onchange = evt => {
+  const [file] = imgInp.files;
+  if (file) {
+    blah.src = URL.createObjectURL(file);
+    document.getElementById('meow').innerHTML=imgInp.files.item(0).size;
+    if(imgInp.files.item(0).size > 60000){
+    alert("檔案太大了\n");
+    }
+    
+  }
+}
+    </script>	
+</body>
+
+</html>
