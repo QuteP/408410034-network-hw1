@@ -22,8 +22,7 @@ tfoot {
 	選擇要上傳的檔案（勿超過60kb，圖片可預覽）: <input name="uploadedfile" type="file" id="imgInp" /><br />
 	<input type="submit" value="上傳" />
 	</form>
-	<br>
-	檔案大小：<p id="meow">0</p>
+
 	<br>
 	<table>
     <thead>
@@ -36,22 +35,25 @@ tfoot {
             <td>檔名</td>
             <td>大小</td>
             <td>處理時間（秒）</td>
+            <!--<td><a id="new">下載鈕</a></td>-->
         </tr>
-   </tbody>
-</table>
+        
+        
+             
+    <tbody>
+
     <script type="text/javascript">
         imgInp.onchange = evt => {
   const [file] = imgInp.files;
   if (file) {
     blah.src = URL.createObjectURL(file);
-    document.getElementById('meow').innerHTML=imgInp.files.item(0).size;
-    if(imgInp.files.item(0).size > 60000){
-    alert("檔案太大了\n");
-    }
-    
+
   }
+  <!--const link = document.getElementById('new');-->
+  <!--link.href=window.URL.createObjectURL(file);-->
+  <!--link.download  = link.href;-->
+  <!--document.getElementById('meow').innerHTML=link.href;-->
 }
     </script>	
 </body>
-
 </html>

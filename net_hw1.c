@@ -14,7 +14,7 @@
 #include <time.h>
 
 #define SERV_PORT 8080
-#define BUFSIZE 4294967200
+#define BUFSIZE 2048
 
 struct {
  char *ext;
@@ -73,15 +73,27 @@ void handle_socket(int fd)
  int j, file_fd, buflen, len;
  long i, ret=0;
  char * fstr;
- static  unsigned char buffer[BUFSIZE+1]={0};
-     
-
- ret=read(fd, buffer,700000);
-
+ static char buffer[BUFSIZE+1]={};
  
- if(!strncmp(buffer,"POST",4)|| !strncmp(buffer,"post",4)){
+ 
+ int fn_len=0;
+ char *filename=NULL;
+ int len_len=0;
+ char *len_str=NULL;
+ FILE *test_txt=NULL;
+ 
+     
+long cnt=0;
+
  time_t start,end;
+ int init_switch=1;
+ char* tempb=buffer;
  start=time(NULL);
+ do{
+ ret=read(fd, tempb,BUFSIZE);
+ if(!strncmp(buffer,"GET",3)|| !strncmp(buffer,"get",3))break;
+ if(init_switch){
+ init_switch=0;
  char *ct=buffer;
  char *fn=buffer;
  char *len=buffer;
@@ -99,12 +111,11 @@ void handle_socket(int fd)
  fn=strstr(fn,"filename=\"");
  fn+=strlen("filename=\"");
  }
- int fn_len=strstr(fn,"\"")-fn;
- 
- char *filename=calloc(fn_len+1,sizeof(char));
+ fn_len=strstr(fn,"\"")-fn;
+ filename=calloc(fn_len+1,sizeof(char));
  strncpy(filename,fn,fn_len);
- int len_len=strstr(len,"\n")-len;
- char *len_str=calloc(len_len+1,sizeof(char));
+ len_len=strstr(len,"\n")-len;
+ len_str=calloc(len_len+1,sizeof(char));
  strncpy(len_str,len,len_len);
  len_len=atoi(len_str);
 
@@ -112,14 +123,27 @@ void handle_socket(int fd)
  ct=strstr(ct,"\n");
  ct+=3;
  }
- FILE *test_txt=fopen(filename, "ab+");
- fwrite(ct, sizeof(unsigned char), ret, test_txt);
+ test_txt=fopen(filename, "ab+");
+ fwrite(ct, sizeof(char), BUFSIZE-(ct-buffer), test_txt);
+ cnt=BUFSIZE-(ct-buffer);
  fclose(test_txt);
+ tempb=calloc(BUFSIZE+1,sizeof(char));
+ continue;
+ }
+ test_txt=fopen(filename, "ab+");
+ fwrite(tempb, sizeof(char), BUFSIZE, test_txt);
+ fclose(test_txt);
+ free(tempb);
+ tempb=calloc(BUFSIZE+1,sizeof(char));
+ cnt+=BUFSIZE;
+ }while(cnt<len_len);
  end=time(NULL);
+ 
+ if(filename!=NULL){
  ReplaceEle(filename,len_len,end-start);
  free(filename);
  free(len_str);}
-  
+ printf("%s\n",buffer);
 
  if(ret==0||ret==-1) {
   exit(3);
