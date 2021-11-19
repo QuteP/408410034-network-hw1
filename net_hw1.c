@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
@@ -12,6 +11,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <sys/stat.h>   
+#include <unistd.h>
 
 #define SERV_PORT 8080
 #define BUFSIZE 2048
@@ -33,7 +34,7 @@ struct {
  {0,0} };
 
 
-void ReplaceEle(char *filename,int filesize,int time){
+void ReplaceEle(char *filename,int filesize,int time,char *f_name){
     FILE* html=fopen("index.html","r");
     char *buffer=calloc(4096,sizeof(char));
     fread(buffer,sizeof(char),4096,html);
@@ -41,12 +42,16 @@ void ReplaceEle(char *filename,int filesize,int time){
     while(strstr(tr,"</tr>")){;
     tr=strstr(tr,"</tr>");
     tr+=strlen("</tr>");}
-
     fclose(html);
     html=fopen("index.html","w+");
     char *buffer2=calloc(4096,sizeof(char));
-    strcat(buffer2,"<tr>\n\t<td>");
+    strcat(buffer2,"<tr>\n\t<td><a href=\"");
+    strcat(buffer2,f_name);
+    strcat(buffer2,"\" download=\"");
+    strcat(buffer2,f_name);
+    strcat(buffer2,"\">");
     strcat(buffer2,filename);
+    strcat(buffer2,"</a>");
     strcat(buffer2,"</td>\n\t<td>");
     char s[10]={0};
     sprintf(s,"%d",filesize);
@@ -58,7 +63,6 @@ void ReplaceEle(char *filename,int filesize,int time){
     strcat(buffer2,"</td>\n\t</tr>");
     strcat(buffer2,tr+1);
     char *temp=calloc(4096,sizeof(char));
-    
     strncpy(temp,buffer,tr-buffer);
     strcat(temp,buffer2);
     fwrite(temp,sizeof(char), strlen(temp), html);
@@ -66,15 +70,15 @@ void ReplaceEle(char *filename,int filesize,int time){
     free(buffer);
     free(temp);
     free(buffer2);
+    free(f_name);
 }
 
 void handle_socket(int fd)
 {
  int j, file_fd, buflen, len;
- long i, ret=0;
+ long i, ret;
  char * fstr;
  static char buffer[BUFSIZE+1]={};
- 
  
  int fn_len=0;
  char *filename=NULL;
@@ -88,6 +92,7 @@ long cnt=0;
  time_t start,end;
  int init_switch=1;
  char* tempb=buffer;
+ char *f_name=calloc(1024,sizeof(char));
  start=time(NULL);
  do{
  ret=read(fd, tempb,BUFSIZE);
@@ -123,15 +128,22 @@ long cnt=0;
  ct=strstr(ct,"\n");
  ct+=3;
  }
- test_txt=fopen(filename, "ab+");
+ strncpy(f_name,len_str,strlen(len_str));
+ strcat(f_name,strstr(filename,"."));
+ test_txt=fopen(f_name, "ab+");
  fwrite(ct, sizeof(char), BUFSIZE-(ct-buffer), test_txt);
  cnt=BUFSIZE-(ct-buffer);
  fclose(test_txt);
  tempb=calloc(BUFSIZE+1,sizeof(char));
  continue;
  }
- test_txt=fopen(filename, "ab+");
+ 
+ test_txt=fopen(f_name, "ab+");
  fwrite(tempb, sizeof(char), BUFSIZE, test_txt);
+ struct stat st;
+ stat(f_name, &st);
+ int size = st.st_size;
+ if(st.st_size>=len_len+2048){ fclose(test_txt);free(tempb);break;}
  fclose(test_txt);
  free(tempb);
  tempb=calloc(BUFSIZE+1,sizeof(char));
@@ -140,7 +152,7 @@ long cnt=0;
  end=time(NULL);
  
  if(filename!=NULL){
- ReplaceEle(filename,len_len,end-start);
+ ReplaceEle(filename,len_len,end-start,f_name);
  free(filename);
  free(len_str);}
  printf("%s\n",buffer);
